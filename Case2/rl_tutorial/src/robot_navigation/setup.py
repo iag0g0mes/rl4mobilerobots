@@ -25,6 +25,8 @@ setup(
         'console_scripts': [
             "train_sac    = robot_navigation.scripts.train_sac:main",
             "eval_sac     = robot_navigation.scripts.eval_sac:main",
+            "train_ppo    = robot_navigation.scripts.train_ppo:main",
+            "eval_ppo     = robot_navigation.scripts.eval_ppo:main",
             "plot_metrics = robot_navigation.scripts.plot_metrics:main",
         ],
     },
