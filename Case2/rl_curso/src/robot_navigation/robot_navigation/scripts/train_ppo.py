@@ -105,26 +105,39 @@ def main():
 
 
     print("[Reinforcement Learning Navigation][train] creating PPO...")
+
+    # ╔══════════════════════════════════════════════════════════════════════════╗
+    # ║  EXERCÍCIO 1 — INSTANCIAR O AGENTE PPO                                   ║
+    # ║                                                                          ║
+    # ║  Troque cada  ...  pelo valor correto.                                   ║
+    # ║  Os hiperparâmetros já chegam prontos no objeto `params`                 ║
+    # ║  (ver a dataclass RunningParams no topo deste arquivo).                  ║
+    # ║  As linhas marcadas [OK] já estão preenchidas          ║
+    # ║                                                                          ║
+    # ║  Doc: stable-baselines3.readthedocs.io/en/master/modules/ppo.html        ║
+    # ╚══════════════════════════════════════════════════════════════════════════╝
     model = PPO(
-        policy="MlpPolicy",
-        env=env,
-        learning_rate=params.lr,
-        n_steps=params.n_steps,
-        batch_size=params.batch_size,
-        n_epochs=params.n_epochs,
-        gamma=0.99,
-        gae_lambda=params.gae_lambda,
-        clip_range=params.clip_range,
-        ent_coef=params.ent_coef,
-        vf_coef=0.5,
-        max_grad_norm=0.5,
-        normalize_advantage=True,
-        policy_kwargs=dict(net_arch=[256,256]),
-        device="auto",
-        seed=params.seed,
-        verbose=1,
-        tensorboard_log=tb_dir,
+        policy=...,                # (str)   política MLP para observações vetoriais
+        env=...,                   # (Env)   ambiente de treino, já embrulhado no Monitor
+        learning_rate=...,         # (float) passo do otimizador Adam
+        n_steps=...,               # (int)   transições coletadas por rollout
+        batch_size=...,            # (int)   minibatch do SGD (precisa dividir n_steps)
+        n_epochs=...,              # (int)   passadas de otimização sobre o mesmo rollout
+        gamma=0.99,                # [OK]    fator de desconto
+        gae_lambda=...,            # (float) trade-off viés/variância do GAE
+        clip_range=...,            # (float) clipping da razão de probabilidades
+        ent_coef=...,              # (float) peso do bônus de entropia (exploração)
+        vf_coef=0.5,               # [OK]    peso da perda da value function
+        max_grad_norm=0.5,         # [OK]    clipping da norma do gradiente
+        normalize_advantage=True,  # [OK]    normaliza a vantagem por minibatch
+        policy_kwargs=dict(net_arch=[256,256]),  # [OK] duas camadas ocultas de 256
+        device="auto",             # [OK]    GPU se houver, senão CPU
+        seed=...,                  # (int)   semente para reprodutibilidade
+        verbose=1,                 # [OK]    log de treino no stdout
+        tensorboard_log=...,       # (str)   diretório dos logs do TensorBoard
     )
+    # ────────────────────────── FIM DO EXERCÍCIO 1 ─────────────────────────────
+
     model.set_logger(new_logger)
 
 
@@ -134,8 +147,20 @@ def main():
         EpisodeMetricsCallback(csv_path=os.path.join(params.logdir, "metrics.csv")),
     ]
 
+    # ╔══════════════════════════════════════════════════════════════════════════╗
+    # ║  EXERCÍCIO 2 — DISPARAR O TREINAMENTO                                    ║
+    # ║                                                                          ║
+    # ║  Chame model.learn(...) passando:                                        ║
+    # ║    • o orçamento total de passos de ambiente (vem de `params`)           ║
+    # ║    • a lista `callbacks` criada logo acima                               ║
+    # ║    • a barra de progresso ligada                                         ║
+    # ║                                                                          ║
+    # ║  Doc: stable-baselines3.readthedocs.io/en/master/modules/ppo.html        ║
+    # ╚══════════════════════════════════════════════════════════════════════════╝
     try:
-        model.learn(total_timesteps=params.total_timesteps, callback=callbacks, progress_bar=True)
+        model.learn(...) 
+        # ──────────────────────── FIM DO EXERCÍCIO 2 ───────────────────────────
+
         model.save(os.path.join(params.logdir, "final_model.zip"))
         print(f"[Reinforcement Learning Navigation][train] Saved final model to: {os.path.join(params.logdir, 'final_model.zip')}")
     finally:

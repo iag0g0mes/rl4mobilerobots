@@ -26,17 +26,19 @@ def compute_reward(cfg: RewardConfig,
                    collision: bool, 
                    success: bool) -> float:
     reward = 0.0
+    reward += cfg.progress_scale * (prev_dist - dist)
+    reward += cfg.time_penalty
+    reward += cfg.ang_vel_penalty_scale * abs(ang_vel)
+    
+    if min_scan < cfg.safe_dist:
+        reward += cfg.obstacle_penalty_scale * (cfg.safe_dist - min_scan) / cfg.safe_dist
+    
+    if lon_vel < 0.0:
+        reward += cfg.reverse_vel_penalty * abs(lon_vel)
 
-    # 1) progresso
-
-    # 2) penalidade de tempo
-
-    # 3) penalidade de velocidade angular
-
-    # 4) penalidade de distancia para obstaculos
-
-    # 5) colisao
-
-    # 6) sucesso
+    if collision:
+        reward += cfg.collision_penalty
+    if success:
+        reward += cfg.goal_bonus
 
     return float(reward)

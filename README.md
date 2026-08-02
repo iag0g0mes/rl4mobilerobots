@@ -57,10 +57,13 @@ same environment, reward function and metrics, so they can be compared directly:
 
 Two workspaces are provided:
 
-- **[Case2/rl_tutorial](Case2/rl_tutorial/)** — complete reference implementation.
-- **[Case2/rl_curso](Case2/rl_curso/)** — student version: the bodies of
-  `compute_reward`, `IndoorEnv.reset` and `IndoorEnv.step` are left as numbered
-  exercise stubs to fill in.
+- **[Case2/rl_tutorial](Case2/rl_tutorial/)** — complete reference implementation (answer key).
+- **[Case2/rl_curso](Case2/rl_curso/)** — student version: identical to `rl_tutorial`
+  except for two marked blocks in
+  [train_ppo.py](Case2/rl_curso/src/robot_navigation/robot_navigation/scripts/train_ppo.py)
+  — the `PPO(...)` constructor (Exercise 1) and the `model.learn(...)` call (Exercise 2).
+  Everything else — environment, reward, SAC, evaluation, plots — is already implemented.
+  See [Case2/rl_curso/EXERCICIOS.md](Case2/rl_curso/EXERCICIOS.md).
 
 All commands below are run from a workspace root (`Case2/rl_tutorial` or `Case2/rl_curso`).
 

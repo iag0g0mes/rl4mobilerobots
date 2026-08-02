@@ -275,16 +275,52 @@ class IndoorEnv(gym.Env):
         # stop the current robot
         self.ros.stop_robot()
         
-        # 1) reset the world
+        # reset the world
+        self.ros.try_reset_world(timeout_sec=1.0)
 
-        # 2) try to sample a safe start
+        # try to sample a safe start
+        for _ in range(20):
+            # sample new start
+            sx, sy, syaw = self._sample_start()
+            syaw = float(syaw + self.np_random.uniform(-math.pi, math.pi) * 0.1)
+            
+            # set new position
+            self.ros.set_entity_state(
+                self.env_cfg.robot_name, 
+                sx, sy, syaw, z=0.05, 
+                reference_frame="world"
+            )
+            self.ros.wait_sim_time(0.3, timeout_sec=2.0)
+
+            scan = self.ros.get_scan()
+            scan = sanitize_scan(scan, self.env_cfg.scan_range_min, self.env_cfg.scan_range_max)
+            scan = downsample_scan(scan, self.env_cfg.n_scan)
+            scan = float(np.min(scan))
+            if scan > (self.env_cfg.collision_threshold + 0.10):
+                break
+            
+        # let physics settle
+        self.ros.wait_sim_time(1.0, timeout_sec=5.0)
+        self.ros.stop_robot()
+
+        # new goal
+        odom = self.ros.get_odom()
+        self._goal_xy = self._sample_goal((odom.x, odom.y))
         
-        # 3) let physics settle
-        
-        # 4) new goal
-       
-        # 5) new observation + logger
-        
+        self.ros.set_entity_state(
+            entity_name="goal_marker",
+            x=self._goal_xy[0], y=self._goal_xy[1], yaw=0.0,
+            z=0.05,
+            reference_frame="world",
+        )
+        self.ros.wait_sim_time(1.0, timeout_sec=5.0)
+
+        # new observation + logger
+        obs, info = self._get_obs()
+        self._prev_dist = info["dist_to_goal"]
+        self._step = 0
+        self._dist_hist = [self._prev_dist]
+
         return obs, info
 
     def step(self, action: np.ndarray):
@@ -312,27 +348,57 @@ class IndoorEnv(gym.Env):
         # sanitization of actions
         a = np.clip(np.array(action, dtype=np.float32), -1.0, 1.0)
         
-        # 1) normalziation
+        # reverse normalziation
+        v = float((a[0] + 1.0) * 0.5 * self.env_cfg.v_max)  # [0, v_max]
+        # v = float(a[0] * self.env_cfg.v_max)  # [-v_max, v_max]
+        w = float(a[1] * self.env_cfg.w_max)  # [-w_max, w_max]
 
+        # publish action
+        self.ros.publish_cmd(v, w)
+        self.ros.wait_sim_time(self.env_cfg.dt, timeout_sec=1.0)
 
-        # 2) publish action
+        # get new observation
+        obs, info = self._get_obs()
 
-        # 3) get new observation
-
-        # 4) reward
-
-        # distance
+        # info to estimate the reward of the action
+        dist = float(info["dist_to_goal"])
         
         # collision
+        min_scan = float(info["min_scan"])
+        collision = bool(min_scan < self.env_cfg.collision_threshold)
         
         # success
+        success = bool(dist < self.env_cfg.goal_threshold)
 
-        # 5) estimate the reward
+        # estimate the reward
+        reward = compute_reward(
+                        self.reward_cfg, # weights
+                        self._prev_dist, 
+                        dist, 
+                        min_scan,
+                        info["w"], 
+                        info["v"], 
+                        collision, 
+                        success
+                  )
         
-        # 6) logger
+        # logger
+        self._prev_dist = dist
+        self._dist_hist.append(dist)
 
-        # 7) stop conditions
-        
+        # stop conditions
+        terminated = collision or success
+        early_stop = (self._step >= self.env_cfg.max_steps)
+
+        if terminated or early_stop:
+            self.ros.stop_robot()
+
+            info["is_success"] = bool(success)
+            info["is_collision"] = bool(collision)
+            info["episode_len"] = int(self._step)
+            info["final_dist"] = float(dist)
+            info["mean_dist"] = float(np.mean(np.array(self._dist_hist, dtype=np.float32)))
+
         return obs, float(reward), terminated, early_stop, info
 
     def close(self):
