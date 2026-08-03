@@ -8,6 +8,8 @@ The project slides are available online and include embedded YouTube videos.
 
 [Open the presentation](https://docs.google.com/presentation/d/1_MxhRH_voSYTWjdKaBzGfKcqtco66x2vCFCuTdZrZPk/present)
 
+[Open the presentation 03/08/2026](https://docs.google.com/presentation/d/1kbxsR3y6PWuLrcN9AZZc7yve2CHhb16IW1nSpFTcxn4/edit?usp=sharing).
+
 > Note: To watch the embedded videos, open the presentation with an internet connection.
 
 ## Project Overview
